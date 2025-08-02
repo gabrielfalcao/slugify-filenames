@@ -1,7 +1,7 @@
 use crate::string::*;
 use crate::errors::*;
 use clap::Args;
-
+use sanitation::SString;
 #[derive(Args, Debug, Clone)]
 #[group()]
 pub struct SlugifyParameters {
@@ -17,6 +17,7 @@ pub struct SlugifyParameters {
 
 impl SlugifyParameters {
     pub fn slugify_string(&self, string: impl std::fmt::Display) -> Result<String> {
+        let string = SString::new(&strip_ansi_escapes::strip(&string.to_string())).unchecked_safe();
         Ok(crate::string::slugify_string(
             string,
             self.non_option_separator(),

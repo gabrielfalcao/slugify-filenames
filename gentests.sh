@@ -5,6 +5,7 @@ IFS="
 script_path="$(cd "$(dirname ${BASH_SOURCE[0]})" && pwd)"
 tests_path="${script_path}/tests"
 fixtures_path="${script_path}/tests/fixtures"
+rm -rf "${fixtures_path}/*"
 set -e
 cargo build
 
@@ -73,7 +74,7 @@ create_dir() {
     path="$@"
     mkdir -p "$(dirname "$path")"
     mkdir -p "${path}"
-    1>&2 echo "${index} => ${path}"
+    1>&2 echo "mkdir -p '${path}'"
 }
 create_file() {
     index=$(( ${1} + 0 ))
@@ -81,7 +82,7 @@ create_file() {
     path="$@"
     mkdir -p "$(dirname "$path")"
     random_hex > "${path}"
-    1>&2 echo "${index} => ${path}"
+    1>&2 echo "create-file '${path}'"
 }
 
 rm -rf "${fixtures_path}"

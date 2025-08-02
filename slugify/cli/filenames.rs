@@ -32,7 +32,7 @@ impl SlugifyFilenames {
         if self.paths.len() > 0 {
             self.paths.clone()
         } else {
-            vec![Path::cwd()]
+            Path::cwd().list().unwrap_or_default()
         }
     }
     pub fn println(&self, string: impl std::fmt::Display) {
@@ -58,7 +58,7 @@ impl SlugifyFilenames {
         let path = self.slugify_ignore_path()?;
         if path.is_file() {
             if !self.quiet {
-                eprintln!("trying to read {path}");
+                eprintln!("trying to read slugifyignores file {path}");
             }
             Ok(path
                 .read()?
@@ -95,24 +95,32 @@ impl SlugifyFilenames {
             None => None,
         };
 
-        let new_filename = Path::join_extension(new_name, new_extension);
-        let new_path = path.with_filename(&new_filename);
-        if path != new_path {
+        let mut count = 0;
+        let new_filename = Path::join_extension(&new_name, new_extension.clone());
+        let mut new_path = path.with_filename(&new_filename);
+        while path.name() != new_path.name() && new_path.exists() {
+            let new_filename = Path::join_extension(format!("{new_name}.{count}"), new_extension.clone());
+            new_path = path.with_filename(&new_filename);
+            count+=1;
+        }
+        if path.name() != new_path.name() {
             let new_path = match path.rename(&new_path, true) {
                 Ok(new_path) => new_path,
                 Err(error) => return Err(Error::IOError(format!("{}", error))),
             };
-            self.println(format!("{} -> {}", path, &new_path));
-            Ok(new_path.try_canonicalize())
+            self.println(format!("{path} => {new_path}"));
+            Ok(new_path.canonicalize()?)
         } else {
-            Ok(path.try_canonicalize())
+            Ok(path.canonicalize()?)
         }
     }
     pub fn slugify_path(&self, path: &Path) -> Result<()> {
         let new_path = self.slugify_file_path(path)?;
         if new_path.is_dir() {
             for sub_path in new_path.list()? {
-                self.println(format!("subpath: {sub_path}"));
+                // let name = sub_path.name();
+                // let slug = self.parameters.slugify_string(&name)?;
+                // eprintln!("{name} => {slug}");
                 self.slugify_path(&sub_path)?;
             }
         }
@@ -128,8 +136,7 @@ impl SlugifyFilenames {
                 eprintln!("ignoring {old_path}");
                 return Ok(());
             }
-            cli.println(format!("{old_path}"));
-            // cli.slugify_path(old_path)?;
+            cli.slugify_path(&old_path)?;
         }
         Ok(())
     }

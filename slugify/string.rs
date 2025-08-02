@@ -26,6 +26,12 @@ pub fn slugify_string(
     } else {
         result
     };
+    let exp = separator_regex_pattern(Some(separator))?;
+    let result = exp.replace_all(&result, separator.to_string())
+        .to_string()
+        .as_str()
+        .to_string();
+
     Ok(result)
 }
 
@@ -39,6 +45,15 @@ pub fn regex_pattern(separator: Option<char>) -> Result<Regex> {
     Ok(regex::Regex::new(&string_pattern(separator))?)
 }
 
+pub fn separator_string_pattern(separator: Option<char>) -> String {
+    match separator {
+        Some('_' | DEFAULT_SEPARATOR) | None => format!("[-]+"),
+        Some(c) => format!("[_{}-]+", c),
+    }
+}
+pub fn separator_regex_pattern(separator: Option<char>) -> Result<Regex> {
+    Ok(regex::Regex::new(&separator_string_pattern(separator))?)
+}
 #[cfg(test)]
 mod string_pattern_tests {
     use crate::*;
