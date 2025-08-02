@@ -13,3 +13,6 @@ Cargo.lock
 *.txt
 tests/recursive*
 .logs/
+
+tests/fixtures
+

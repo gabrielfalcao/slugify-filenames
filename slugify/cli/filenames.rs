@@ -24,13 +24,20 @@ pub struct SlugifyFilenames {
     #[arg(short, long)]
     quiet: bool,
 
-    #[arg(short, long, help = "path to .slugifyignore file")]
+    #[arg(short = 'S', long, help = "path to .slugifyignore file")]
     slugify_ignore: Option<Path>,
 }
 impl SlugifyFilenames {
+    pub fn paths(&self) -> Vec<Path> {
+        if self.paths.len() > 0 {
+            self.paths.clone()
+        } else {
+            vec![Path::cwd()]
+        }
+    }
     pub fn println(&self, string: impl std::fmt::Display) {
         if !self.quiet {
-            println!("{}", string)
+            println!("{string}");
         }
     }
     pub fn slugify_ignore_path(&self) -> Result<Path> {
@@ -75,7 +82,13 @@ impl SlugifyFilenames {
         }
     }
     pub fn slugify_file_path(&self, path: &Path) -> Result<Path> {
-        let (name, extension) = path.split_extension();
+        let path = path.canonicalize()?;
+        let (name, extension) = if path.is_file() {
+            path.split_extension()
+        } else {
+            (path.name(), None)
+        };
+
         let new_name = self.parameters.slugify_string(&name)?;
         let new_extension = match extension.clone() {
             Some(extension) => Some(self.parameters.slugify_string(extension)?),
@@ -84,7 +97,7 @@ impl SlugifyFilenames {
 
         let new_filename = Path::join_extension(new_name, new_extension);
         let new_path = path.with_filename(&new_filename);
-        if *path != new_path {
+        if path != new_path {
             let new_path = match path.rename(&new_path, true) {
                 Ok(new_path) => new_path,
                 Err(error) => return Err(Error::IOError(format!("{}", error))),
@@ -99,19 +112,24 @@ impl SlugifyFilenames {
         let new_path = self.slugify_file_path(path)?;
         if new_path.is_dir() {
             for sub_path in new_path.list()? {
+                self.println(format!("subpath: {sub_path}"));
                 self.slugify_path(&sub_path)?;
             }
         }
+        // self.slugify_file_path(path)?;
         Ok(())
     }
     pub fn execute(args: Vec<String>) -> Result<()> {
         let cli = SlugifyFilenames::parse_from(args);
         let ignores = cli.slugify_ignore_lines()?;
-        for old_path in cli.paths.iter() {
-            if cli.should_ignore(&ignores, old_path)? {
+        for old_path in cli.paths().iter() {
+            let old_path = old_path.canonicalize()?;
+            if cli.should_ignore(&ignores, &old_path)? {
+                eprintln!("ignoring {old_path}");
                 return Ok(());
             }
-            cli.slugify_path(old_path)?;
+            cli.println(format!("{old_path}"));
+            // cli.slugify_path(old_path)?;
         }
         Ok(())
     }

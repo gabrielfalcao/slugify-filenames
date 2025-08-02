@@ -1,17 +1,10 @@
 [package]
 name = "slugify"
 version = "0.0.1"
-edition = "2021"
+edition = "2024"
 autoexamples = false
 autobenches = false
-
-[package.metadata]
-targets = [
-    "aarch64-apple-darwin",
-    "x86_64-unknown-linux-gnu",
-    "aarch64-unknown-linux-gnu",
-]
-
+default-run = "slugify-filenames"
 
 [lib]
 name = "slugify"
@@ -43,4 +36,4 @@ serde = { version = "1.0.219", features = ["derive"] }
 iocore = { version = "3.1.0" }
 
 [dev-dependencies]
-iocore-test = { version = "3.0.3" }
+iocore-test = { version = "3.1.0" }
