@@ -30,6 +30,9 @@ pub struct SlugifyFilenames {
     #[arg(short, long)]
     dry_run: bool,
 
+    #[arg(short, long)]
+    recursive: bool,
+
     #[arg(short = 'I', long, help = "path to .slugifyignore file")]
     slugify_ignore: Option<Path>,
 }
@@ -114,7 +117,7 @@ impl SlugifyFilenames {
     }
     pub fn slugify_path(&self, path: &Path) -> Result<()> {
         let new_path = self.slugify_file_path(path)?;
-        if new_path.is_dir() {
+        if self.recursive && new_path.is_dir() {
             for sub_path in new_path.list()? {
                 self.slugify_path(&sub_path)?;
             }
