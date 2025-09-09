@@ -24,6 +24,9 @@ pub struct SlugifyFilenames {
     #[arg(short, long)]
     quiet: bool,
 
+    #[arg(short, long)]
+    force: bool,
+
     #[arg(short, long, help = "path to .slugifyignore file")]
     slugify_ignore: Option<Path>,
 }
@@ -85,6 +88,13 @@ impl SlugifyFilenames {
         let new_filename = Path::join_extension(new_name, new_extension);
         let new_path = path.with_filename(&new_filename);
         if *path != new_path {
+            if path.is_dir() && new_path.is_dir() && self.force {
+                return Ok(new_path.try_canonicalize());
+            } else if !self.force {
+                return Err(Error::IOError(format!(
+                    "{new_path} already exists, use --force to overwrite"
+                )));
+            }
             let new_path = match path.rename(&new_path, true) {
                 Ok(new_path) => new_path,
                 Err(error) => return Err(Error::IOError(format!("{}", error))),
