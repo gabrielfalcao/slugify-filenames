@@ -42,6 +42,15 @@ impl SlugifyFilenames {
             println!("{}", string)
         }
     }
+    pub fn paths(&self) -> Vec<Path> {
+        if self.paths.is_empty() {
+            let cwd = Path::cwd().try_canonicalize();
+            self.println(format!("no paths provided, assuming {}", cwd.abbreviate()));
+            cwd.list().unwrap_or_default()
+        } else {
+            self.paths.clone()
+        }
+    }
     pub fn slugify_ignore_path(&self) -> Result<Path> {
         if let Some(path) = &self.slugify_ignore {
             if !path.exists() {
@@ -59,9 +68,7 @@ impl SlugifyFilenames {
     pub fn slugify_ignore_lines(&self) -> Result<Vec<String>> {
         let path = self.slugify_ignore_path()?;
         if path.is_file() {
-            if !self.quiet {
-                eprintln!("trying to read {path}");
-            }
+            self.println(format!("trying to read {path}"));
             Ok(path
                 .read()?
                 .lines()
@@ -95,8 +102,8 @@ impl SlugifyFilenames {
         let new_path = path.with_filename(&new_filename);
         if *path != new_path {
             if self.dry_run {
-                println!("would rename {path} to {new_path}");
-                return Ok(new_path)
+                self.println(format!("would rename {path} to {new_path}"));
+                return Ok(new_path);
             }
             if path.is_dir() && new_path.is_dir() && self.force {
                 return Ok(new_path.try_canonicalize());
@@ -127,11 +134,30 @@ impl SlugifyFilenames {
     pub fn execute(args: Vec<String>) -> Result<()> {
         let cli = SlugifyFilenames::parse_from(args);
         let ignores = cli.slugify_ignore_lines()?;
-        for old_path in cli.paths.iter() {
-            if cli.should_ignore(&ignores, old_path)? {
-                return Ok(());
+        let paths = cli.paths();
+        let total_paths = paths.len();
+        let target_paths = paths
+            .clone()
+            .into_iter()
+            .filter(|old_path| cli.should_ignore(&ignores, &old_path).unwrap_or_default())
+            .collect::<Vec<Path>>();
+        let total_filtered = target_paths.len();
+        if total_filtered == 0 {
+            if total_paths > 0 {
+                cli.println(format!(
+                    "total paths is {total_paths} but all have been ignored: "
+                ));
+                for path in paths.iter() {
+                    let path = path.relative_to_cwd();
+                    cli.println(format!("    {path}"));
+                }
+            } else {
+                cli.println(format!("no paths to slugify"));
             }
-            cli.slugify_path(old_path)?;
+            return Ok(());
+        }
+        for old_path in target_paths {
+            cli.slugify_path(&old_path)?;
         }
         Ok(())
     }
