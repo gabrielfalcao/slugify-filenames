@@ -30,7 +30,7 @@ pub struct SlugifyFilenames {
     #[arg(short, long)]
     dry_run: bool,
 
-    #[arg(short, long, help = "path to .slugifyignore file")]
+    #[arg(short = 'I', long, help = "path to .slugifyignore file")]
     slugify_ignore: Option<Path>,
 }
 impl SlugifyFilenames {
