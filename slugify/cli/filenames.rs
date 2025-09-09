@@ -27,6 +27,9 @@ pub struct SlugifyFilenames {
     #[arg(short, long)]
     force: bool,
 
+    #[arg(short, long)]
+    dry_run: bool,
+
     #[arg(short, long, help = "path to .slugifyignore file")]
     slugify_ignore: Option<Path>,
 }
@@ -88,6 +91,10 @@ impl SlugifyFilenames {
         let new_filename = Path::join_extension(new_name, new_extension);
         let new_path = path.with_filename(&new_filename);
         if *path != new_path {
+            if self.dry_run {
+                println!("would rename {path} to {new_path}");
+                return Ok(new_path)
+            }
             if path.is_dir() && new_path.is_dir() && self.force {
                 return Ok(new_path.try_canonicalize());
             } else if !self.force {
