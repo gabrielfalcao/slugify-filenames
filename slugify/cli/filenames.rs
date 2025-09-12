@@ -48,7 +48,9 @@ impl SlugifyFilenames {
     pub fn paths(&self) -> Vec<Path> {
         let paths = if self.paths.is_empty() {
             let cwd = Path::cwd().try_canonicalize();
-            self.println(format!("no paths provided, assuming {}", cwd.abbreviate()));
+            if self.debug {
+                self.println(format!("no paths provided, assuming {}", cwd.abbreviate()));
+            }
             cwd.list().unwrap_or_default()
         } else {
             self.paths.clone()
@@ -60,6 +62,14 @@ impl SlugifyFilenames {
             }
         }
         paths
+            .into_iter()
+            .filter(|path| {
+                if !path.exists() {
+                    self.println(format!("path does not exist: {path}"));
+                }
+                path.exists()
+            })
+            .collect()
     }
     pub fn slugify_ignore_path(&self) -> Result<Path> {
         if let Some(path) = &self.slugify_ignore {
@@ -118,7 +128,9 @@ impl SlugifyFilenames {
         if self.debug {
             dbg!(*path != new_path, path, &new_path);
         }
-        if path.canonicalize()?.to_string() != new_path.canonicalize()?.to_string() {
+        let path = path.canonicalize()?;
+        let new_path = new_path.canonicalize()?;
+        if path.to_string() != new_path.to_string() {
             if self.dry_run {
                 self.println(format!("would rename {path} to {new_path}"));
                 return Ok(new_path);
@@ -128,7 +140,7 @@ impl SlugifyFilenames {
                     dbg!(path.is_dir(), new_path.is_dir(), self.force);
                 }
                 return Ok(new_path.try_canonicalize());
-            } else if !self.force {
+            } else if path.exists() && new_path.exists() && !self.force {
                 return Err(Error::IOError(format!(
                     "{new_path} already exists, use --force to overwrite"
                 )));
@@ -142,6 +154,8 @@ impl SlugifyFilenames {
         } else {
             if self.debug {
                 self.println(format!("'{path}' == '{new_path}'"));
+            } else {
+                self.println(format!("unchanged: '{path}'"));
             }
             Ok(path.try_canonicalize())
         }
