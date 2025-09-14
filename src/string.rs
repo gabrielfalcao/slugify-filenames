@@ -92,4 +92,10 @@ mod slugify_string_tests {
         assert_eq!(slugify_string(" Foo Baz ", '_', false, true)?, "_foo_baz_");
         Ok(())
     }
+
+    #[test]
+    fn test_unicode_data_cyrilic_letters() {
+        assert_eq!(slugify_string("ÐÐµ, ÑÑÐŸ ÑÐ°Ð·Ð±ÑÐŽÐžÐ» Ð²Ð°Ñ. Ð¯ Ð¿ÑÐŸÑÑÐŸ ÑÐ»ÐžÑÐºÐŸÐŒ Ð²ÐŸÐ·Ð±ÑÐ¶ÐŽÐµÐœ í Ÿíµµ", '-', true, true)?, "DDNDNDD");
+        Ok(())
+    }
 }
