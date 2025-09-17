@@ -2,7 +2,7 @@ use crate::errors::Result;
 use any_ascii::any_ascii;
 use regex::Regex;
 pub const DEFAULT_SEPARATOR: char = '-';
-
+use strip_ansi_escapes::strip_ansi_escapes;
 use heck::AsKebabCase;
 
 pub fn slugify_string(
@@ -10,24 +10,25 @@ pub fn slugify_string(
     separator: char,
 ) -> Result<String> {
     let exp = regex_pattern(Some(separator))?;
-    let haystack = haystack.to_string();
-    let stage0 = AsKebabCase(any_ascii(&haystack)).to_string();
-    let stage1 = if separator != '-' {
-        stage0
+    let stage0 = haystack.to_string();
+    let stage1 = strip_ansi_escapes(&stage0.to_string()).to_string();
+    let stage2 = AsKebabCase(any_ascii(&stage1)).to_string();
+    let stage3 = if separator != '-' {
+        stage2
             .replace("-", &separator.to_string())
             .trim_matches('-')
             .to_string()
     } else {
-        stage0.clone()
+        stage2.clone()
     };
 
-    let stage2 = exp
-        .replace_all(&stage1, separator.to_string())
+    let stage4 = exp
+        .replace_all(&stage3, separator.to_string())
         .to_string()
         .as_str()
         .to_string();
-    let stage3 = stage2.trim_matches(separator).to_lowercase().to_string();
-    Ok(stage3)
+    let stage5 = stage4.trim_matches(separator).to_lowercase().to_string();
+    Ok(stage5)
 }
 
 pub fn string_pattern(separator: Option<char>) -> String {
