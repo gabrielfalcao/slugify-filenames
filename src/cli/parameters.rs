@@ -1,5 +1,5 @@
-use crate::string::*;
 use crate::errors::*;
+use crate::string::*;
 use clap::Args;
 
 #[derive(Args, Debug, Clone)]
@@ -7,12 +7,6 @@ use clap::Args;
 pub struct SlugifyParameters {
     #[arg(short, long, default_value = "-")]
     separator: Option<char>,
-
-    #[arg(short, long)]
-    no_trim_matches: bool,
-
-    #[arg(short = 'L', long)]
-    no_lowercase: bool,
 }
 
 impl SlugifyParameters {
@@ -20,8 +14,6 @@ impl SlugifyParameters {
         Ok(crate::string::slugify_string(
             string,
             self.non_option_separator(),
-            self.trim_matches(),
-            self.lowercase()
         )?)
     }
     pub fn separator(&self) -> Option<char> {
@@ -35,11 +27,5 @@ impl SlugifyParameters {
             Some(separator) => separator,
             None => DEFAULT_SEPARATOR,
         }
-    }
-    pub fn trim_matches(&self) -> bool {
-        !self.no_trim_matches
-    }
-    pub fn lowercase(&self) -> bool {
-        !self.no_lowercase
     }
 }

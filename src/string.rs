@@ -1,32 +1,33 @@
 use crate::errors::Result;
-use regex::Regex;
 use any_ascii::any_ascii;
+use regex::Regex;
 pub const DEFAULT_SEPARATOR: char = '-';
+
+use heck::AsKebabCase;
 
 pub fn slugify_string(
     haystack: impl std::fmt::Display,
     separator: char,
-    trim_matches: bool,
-    lowercase: bool,
 ) -> Result<String> {
     let exp = regex_pattern(Some(separator))?;
-    let haystack = any_ascii(&haystack.to_string());
-    let result = exp
-        .replace_all(&haystack, separator.to_string())
+    let haystack = haystack.to_string();
+    let stage0 = AsKebabCase(any_ascii(&haystack)).to_string();
+    let stage1 = if separator != '-' {
+        stage0
+            .replace("-", &separator.to_string())
+            .trim_matches('-')
+            .to_string()
+    } else {
+        stage0.clone()
+    };
+
+    let stage2 = exp
+        .replace_all(&stage1, separator.to_string())
         .to_string()
         .as_str()
         .to_string();
-    let result = if trim_matches {
-        result.trim_matches(separator).to_string()
-    } else {
-        result
-    };
-    let result = if lowercase {
-        result.to_lowercase()
-    } else {
-        result
-    };
-    Ok(result)
+    let stage3 = stage2.trim_matches(separator).to_lowercase().to_string();
+    Ok(stage3)
 }
 
 pub fn string_pattern(separator: Option<char>) -> String {
@@ -76,26 +77,37 @@ mod regex_pattern_tests {
 #[cfg(test)]
 mod slugify_string_tests {
     use crate::*;
-
+    use debug_et_diagnostics::step;
     #[test]
     fn test_slugify_string() -> Result<()> {
-        assert_eq!(slugify_string(" Foo Baz ", '-', true, false)?, "Foo-Baz");
-        assert_eq!(slugify_string(" Foo Baz ", '-', true, false)?, "Foo-Baz");
-        assert_eq!(slugify_string(" Foo Baz ", '_', true, false)?, "Foo_Baz");
-        assert_eq!(slugify_string(" Foo Baz ", '-', false, false)?, "-Foo-Baz-");
-        assert_eq!(slugify_string(" Foo Baz ", '_', false, false)?, "_Foo_Baz_");
-
-        assert_eq!(slugify_string(" Foo Baz ", '-', true, true)?, "foo-baz");
-        assert_eq!(slugify_string(" Foo Baz ", '-', true, true)?, "foo-baz");
-        assert_eq!(slugify_string(" Foo Baz ", '_', true, true)?, "foo_baz");
-        assert_eq!(slugify_string(" Foo Baz ", '-', false, true)?, "-foo-baz-");
-        assert_eq!(slugify_string(" Foo Baz ", '_', false, true)?, "_foo_baz_");
+        assert_slugify_string!(" Foo Baz ", '-', "foo-baz");
+        assert_slugify_string!(" Foo Baz ", '_', "foo_baz");
         Ok(())
     }
 
     #[test]
-    fn test_unicode_data_cyrilic_letters() {
-        assert_eq!(slugify_string("ÐÐµ, ÑÑÐŸ ÑÐ°Ð·Ð±ÑÐŽÐžÐ» Ð²Ð°Ñ. Ð¯ Ð¿ÑÐŸÑÑÐŸ ÑÐ»ÐžÑÐºÐŸÐŒ Ð²ÐŸÐ·Ð±ÑÐ¶ÐŽÐµÐœ í Ÿíµµ", '-', true, true)?, "DDNDNDD");
+    fn test_unicode_data_cyrilic_letters() -> Result<()> {
+        assert_slugify_string!("ÐÐµ, ÑÑÐŸ ÑÐ°Ð·Ð±ÑÐŽÐžÐ» Ð²Ð°Ñ. Ð¯ Ð¿ÑÐŸÑÑÐŸ ÑÐ»ÐžÑÐºÐŸÐŒ Ð²ÐŸÐ·Ð±ÑÐ¶ÐŽÐµÐœ í Ÿíµµ", '-', "d-du-nndy-n-ddeg-d-d-ndz-dz-d-d2-ddeg-n-d-d-ndynndy-nd-dz-n-do-dyd-oe-d2dyd-d-ndpdz-du-doe-i-yiuu");
         Ok(())
+    }
+
+    #[macro_export]
+    macro_rules! assert_slugify_string {
+        ($haystack:expr, $separator:literal, $expected_to_be_slugified:expr) => {{
+            // use debug_et_diagnostics::step;
+            let left = $haystack.to_string();
+            let right = $expected_to_be_slugified.to_string();
+            let separator = $separator.clone();
+            let from = slugify_string(left.to_string(), $separator)?;
+            let to = right.to_string();
+            // debug_et_diagnostics::step!(format!(
+            //     "expect slugify_string({left:#?}) to equal {right:#?}"
+            // ));
+
+            assert_eq!(
+                from, to,
+                "expected slugify_string({left:#?}, {separator:#?})? to equal {right:#?}"
+            );
+        }};
     }
 }

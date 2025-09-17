@@ -4,7 +4,8 @@ version = "0.0.1"
 edition = "2021"
 autoexamples = false
 autobenches = false
-
+autotests = false
+default-run = "slugify-string"
 [package.metadata]
 targets = [
     "aarch64-apple-darwin",
@@ -36,12 +37,18 @@ doctest = false
 bench = false
 doc = false
 
+# [[test]]
+# name = "test_cli"
+# path = "tests/test_cli.rs"
+
 [dependencies]
 clap = { version = "4.5.40", features = ["derive", "env", "string", "unicode", "wrap_help"] }
 regex = "1.11.1"
 serde = { version = "1.0.219", features = ["derive"] }
 iocore = { version = "3.1.0" }
 any_ascii = "0.3.3"
+heck = "0.5.0"
 
 [dev-dependencies]
-iocore-test = { version = "3.0.3" }
+debug-et-diagnostics = "0.3.1"
+iocore-test = "3.1.0"
