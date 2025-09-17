@@ -115,6 +115,30 @@ impl SlugifyFilenames {
                 }))
         }
     }
+    pub fn unique_new_path(&self, path: &Path) -> Path {
+        let path = path.try_canonicalize();
+        let (name, extension) = if path.is_file() {
+            path.split_extension()
+        } else {
+            (path.name(), None)
+        };
+
+        let new_name = self.parameters.slugify_string(&name)?;
+        let new_extension = match extension.clone() {
+            Some(extension) => Some(self.parameters.slugify_string(extension)?),
+            None => None,
+        };
+
+        let mut count = 0;
+        let new_filename = Path::join_extension(&new_name, new_extension.clone());
+        let mut new_path = path.with_filename(&new_filename);
+        while path.name() != new_path.name() && new_path.exists() {
+            let new_filename = Path::join_extension(format!("{new_name}.{count}"), new_extension.clone());
+            new_path = path.with_filename(&new_filename);
+            count+=1;
+        }
+        new_path
+    }
     pub fn slugify_file_path(&self, path: &Path) -> Result<Path> {
         let (name, extension) = path.split_extension();
         let new_name = self.parameters.slugify_string(&name)?;
@@ -124,12 +148,9 @@ impl SlugifyFilenames {
         };
 
         let new_filename = Path::join_extension(new_name, new_extension);
-        let new_path = path.with_filename(&new_filename);
-        if self.debug {
-            dbg!(*path != new_path, path, &new_path);
-        }
+        let new_path = self.unique_new_path(&path.with_filename(&new_filename));
         let path = path.canonicalize()?;
-        let new_path = new_path.canonicalize()?;
+        let new_path = new_path.try_canonicalize();
         if path.to_string() != new_path.to_string() {
             if self.dry_run {
                 self.println(format!("would rename {path} to {new_path}"));
