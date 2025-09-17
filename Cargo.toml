@@ -41,6 +41,7 @@ clap = { version = "4.5.40", features = ["derive", "env", "string", "unicode", "
 regex = "1.11.1"
 serde = { version = "1.0.219", features = ["derive"] }
 iocore = { version = "3.1.0" }
+any_ascii = "0.3.3"
 
 [dev-dependencies]
 iocore-test = { version = "3.0.3" }

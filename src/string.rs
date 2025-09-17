@@ -1,6 +1,6 @@
 use crate::errors::Result;
 use regex::Regex;
-
+use any_ascii::any_ascii;
 pub const DEFAULT_SEPARATOR: char = '-';
 
 pub fn slugify_string(
@@ -10,7 +10,7 @@ pub fn slugify_string(
     lowercase: bool,
 ) -> Result<String> {
     let exp = regex_pattern(Some(separator))?;
-    let haystack = haystack.to_string();
+    let haystack = any_ascii(&haystack.to_string());
     let result = exp
         .replace_all(&haystack, separator.to_string())
         .to_string()
