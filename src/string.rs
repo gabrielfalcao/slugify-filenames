@@ -2,7 +2,7 @@ use crate::errors::Result;
 use any_ascii::any_ascii;
 use regex::Regex;
 pub const DEFAULT_SEPARATOR: char = '-';
-use strip_ansi_escapes::strip_ansi_escapes;
+use strip_ansi_escapes::strip as strip_ansi_escapes;
 use heck::AsKebabCase;
 
 pub fn slugify_string(
@@ -11,7 +11,8 @@ pub fn slugify_string(
 ) -> Result<String> {
     let exp = regex_pattern(Some(separator))?;
     let stage0 = haystack.to_string();
-    let stage1 = strip_ansi_escapes(&stage0.to_string()).to_string();
+    let stage0_bytes = strip_ansi_escapes(&stage0.to_string());
+    let stage1 = String::from_utf8_lossy(&stage0_bytes);
     let stage2 = AsKebabCase(any_ascii(&stage1)).to_string();
     let stage3 = if separator != '-' {
         stage2
@@ -78,7 +79,7 @@ mod regex_pattern_tests {
 #[cfg(test)]
 mod slugify_string_tests {
     use crate::*;
-    use debug_et_diagnostics::step;
+    // use debug_et_diagnostics::step;
     #[test]
     fn test_slugify_string() -> Result<()> {
         assert_slugify_string!(" Foo Baz ", '-', "foo-baz");

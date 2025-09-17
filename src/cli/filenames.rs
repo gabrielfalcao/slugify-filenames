@@ -115,7 +115,7 @@ impl SlugifyFilenames {
                 }))
         }
     }
-    pub fn unique_new_path(&self, path: &Path) -> Path {
+    pub fn unique_new_path(&self, path: &Path) -> Result<Path> {
         let path = path.try_canonicalize();
         let (name, extension) = if path.is_file() {
             path.split_extension()
@@ -137,20 +137,11 @@ impl SlugifyFilenames {
             new_path = path.with_filename(&new_filename);
             count+=1;
         }
-        new_path
+        Ok(new_path)
     }
     pub fn slugify_file_path(&self, path: &Path) -> Result<Path> {
-        let (name, extension) = path.split_extension();
-        let new_name = self.parameters.slugify_string(&name)?;
-        let new_extension = match extension.clone() {
-            Some(extension) => Some(self.parameters.slugify_string(extension)?),
-            None => None,
-        };
-
-        let new_filename = Path::join_extension(new_name, new_extension);
-        let new_path = self.unique_new_path(&path.with_filename(&new_filename));
         let path = path.canonicalize()?;
-        let new_path = new_path.try_canonicalize();
+        let new_path = self.unique_new_path(&path)?;
         if path.to_string() != new_path.to_string() {
             if self.dry_run {
                 self.println(format!("would rename {path} to {new_path}"));
