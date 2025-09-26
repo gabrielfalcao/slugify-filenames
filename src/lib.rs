@@ -1,5 +1,5 @@
 pub mod cli;
-pub use cli::{SlugifyFilenames, SlugifyParameters, SlugifyString};
+pub use cli::{SlugifyFilenames, SlugifyParameters, SlugifyString, heck_aliases};
 pub mod errors;
 pub use errors::{Error, Result};
 pub mod string;
