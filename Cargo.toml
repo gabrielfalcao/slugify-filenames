@@ -1,11 +1,12 @@
 [package]
 name = "slugify"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 autoexamples = false
 autobenches = false
 autotests = false
 default-run = "slugify-string"
+
 [package.metadata]
 targets = [
     "aarch64-apple-darwin",
