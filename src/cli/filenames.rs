@@ -49,11 +49,12 @@ pub struct SlugifyFilenames {
 }
 impl SlugifyFilenames {
     pub fn actual_verbosity(&self) -> Verbosity {
-        dbg!(&self.verbosity, &self.quiet, &self.verbose);
+        // dbg!(&self.verbosity, &self.quiet, &self.verbose);
         Verbosity::from(self.verbosity.level() - self.quiet + self.verbose)
     }
     pub fn verbosity_matches(&self, verbosity: Verbosity) -> bool {
-        self.actual_verbosity().level() <= verbosity.level()
+        // dbg!(&self.actual_verbosity(), &verbosity);
+        verbosity.level() <= self.actual_verbosity().level()
     }
     pub fn println(&self, string: impl std::fmt::Display, verbosity: Verbosity) {
         if self.verbosity_matches(verbosity) {

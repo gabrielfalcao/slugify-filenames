@@ -3,9 +3,9 @@ use clap::ValueEnum;
 
 use crate::heck_aliases;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, Debug};
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize, Ord, PartialOrd, Eq, PartialEq, Default)]
+#[derive(Clone, Copy, Deserialize, Serialize, Ord, PartialOrd, Eq, PartialEq, Default)]
 pub enum Verbosity {
     None,
     Quiet,
@@ -21,6 +21,15 @@ impl Display for Verbosity {
         let variant = names[0];
 
         write!(f, "{variant}")
+    }
+}
+
+impl Debug for Verbosity {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        let names = self.variant_names();
+        let variant = names[0];
+        let level = self.level();
+        write!(f, "Verbosity::{variant}[level={level}]")
     }
 }
 
