@@ -29,7 +29,7 @@ pub struct SlugifyFilenames {
     #[arg(short, long, help = "increase verbosity", action = ArgAction::Count)]
     verbose: u8,
 
-    #[arg(short, long, default_value = "info")]
+    #[arg(long, default_value = "info", conflicts_with_all=["quiet", "verbose"], help = "set verbosity explicitly rather than by increments or decrements (.i.e.: `--verbose' or `--quiet')")]
     verbosity: Verbosity,
 
     #[arg(short, long)]
@@ -49,6 +49,7 @@ pub struct SlugifyFilenames {
 }
 impl SlugifyFilenames {
     pub fn actual_verbosity(&self) -> Verbosity {
+        dbg!(&self.verbosity, &self.quiet, &self.verbose);
         Verbosity::from(self.verbosity.level() - self.quiet + self.verbose)
     }
     pub fn verbosity_matches(&self, verbosity: Verbosity) -> bool {
