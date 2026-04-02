@@ -1,6 +1,6 @@
 [package]
 name = "slugify"
-version = "0.2.0"
+version = "0.4.1"
 edition = "2024"
 autoexamples = false
 autobenches = false
@@ -20,7 +20,7 @@ name = "slugify"
 path = "src/lib.rs"
 # crate-type = ["dylib"]
 
-doctest = false
+doctest = true
 bench = false
 
 
@@ -50,6 +50,10 @@ iocore = { version = "3.1.0" }
 any_ascii = "0.3.3"
 heck = "0.5.0"
 strip-ansi-escapes = "0.2.1"
+percent-encoding = "2.3.2"
+is-terminal = "0.4.17"
+deunicode = "1.6.2"
+sanitation = "1.0.3"
 
 [dev-dependencies]
 debug-et-diagnostics = "0.3.1"

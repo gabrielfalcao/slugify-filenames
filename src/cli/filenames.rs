@@ -6,7 +6,7 @@ pub use crate::errors::{Error, Result};
 use clap::{ArgAction, Parser};
 use iocore::Path;
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(
     author,
     version,
@@ -69,15 +69,23 @@ impl SlugifyFilenames {
     pub fn paths(&self) -> Vec<Path> {
         let paths = if self.paths.is_empty() {
             let cwd = Path::cwd().try_canonicalize();
-            self.println(format!("no paths provided, assuming {}", cwd.abbreviate()), Verbosity::Debug);
+            self.println(
+                format!("no paths provided, assuming {}", cwd.abbreviate()),
+                Verbosity::Debug,
+            );
             cwd.list().unwrap_or_default()
         } else {
             self.paths.clone()
         };
-        let all_paths_are_dirs = paths.iter().all(|path| path.try_canonicalize().is_dir());
-        if !self.recursive && all_paths_are_dirs {
-            self.eprintln("all target paths are directories but -r/--recursive was not provided", Verbosity::Hint);
+        let some_paths_are_dirs = paths.iter().any(|path| path.try_canonicalize().is_dir());
+
+        if !self.recursive && some_paths_are_dirs {
+            self.eprintln(
+                "some target paths are directories but -r/--recursive was not provided",
+                Verbosity::Hint,
+            );
         }
+
         paths
             .into_iter()
             .filter(|path| {
@@ -134,35 +142,37 @@ impl SlugifyFilenames {
     }
     pub fn unique_new_path(&self, path: &Path) -> Result<Path> {
         let path = path.try_canonicalize();
-        let (name, extension) = if path.is_file() {
-            path.split_extension()
+        // let (name, extension) = if path.is_file() {
+        //     path.split_extension()
+        // } else {
+        //     (path.name(), None)
+        // };
+
+        let mut new_path = self.parameters.slugify_path(path.path())?;
+        if !new_path.exists() {
+            Ok(new_path)
         } else {
-            (path.name(), None)
-        };
+            let (new_name, new_extension) = new_path.split_extension();
 
-        let new_name = self.parameters.slugify_string(&name)?;
-        let new_extension = match extension.clone() {
-            Some(extension) => Some(self.parameters.slugify_string(extension)?),
-            None => None,
-        };
-
-        let mut count = 0;
-        let new_filename = Path::join_extension(&new_name, new_extension.clone());
-        let mut new_path = path.with_filename(&new_filename);
-        while path.name() != new_path.name() && new_path.exists() {
-            let new_filename =
-                Path::join_extension(format!("{new_name}.{count}"), new_extension.clone());
-            new_path = path.with_filename(&new_filename);
-            count += 1;
+            let mut count = 0;
+            while path.name() != new_path.name() && new_path.exists() {
+                let new_filename =
+                    Path::join_extension(format!("{new_name}.{count}"), new_extension.clone());
+                new_path = path.with_filename(&new_filename);
+                count += 1;
+            }
+            Ok(new_path)
         }
-        Ok(new_path)
     }
     pub fn slugify_file_path(&self, path: &Path) -> Result<Path> {
         let path = path.canonicalize()?;
         let new_path = self.unique_new_path(&path)?;
         if path.to_string() != new_path.to_string() {
             if self.dry_run {
-                self.println(format!("would rename {path} to {new_path}"), Verbosity::Info);
+                self.println(
+                    format!("would rename {path} to {new_path}"),
+                    Verbosity::Info,
+                );
                 return Ok(new_path);
             }
             if path.is_dir() && new_path.is_dir() && self.force {
@@ -226,9 +236,10 @@ impl SlugifyFilenames {
 
         if total_filtered.is_some() && total_filtered.clone().unwrap() == 0 {
             if total_paths > 0 {
-                cli.println(format!(
-                    "total paths is {total_paths} but all have been ignored: "
-                ), Verbosity::Warning);
+                cli.println(
+                    format!("total paths is {total_paths} but all have been ignored: "),
+                    Verbosity::Warning,
+                );
                 for path in paths.iter() {
                     let path = path.relative_to_cwd();
                     cli.println(format!("    {path}"), Verbosity::Warning);

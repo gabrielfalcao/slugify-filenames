@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+set -umeTE
+set +f
+set -o pipefail
+unset IFS
+export IFS=$'\n'
+
+declare -- script_name="$(basename "${BASH_SOURCE[0]}")"
+declare -- script_path="$(2>/dev/random 1>/dev/random cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+declare -- this_script_path="${script_path}/${script_name}"
+declare -- git_repo_path="$(git rev-parse --show-toplevel)"
+declare -- target_path="${git_repo_path}/target"
+
+declare -- target_debug_path="${target_path}/debug"
+declare -- target_release_path="${target_path}/release"
+
+declare -- slugify_filenames_path="${target_debug_path}/slugify-filenames"
+declare -- tests_path="${git_repo_path}/tests"
+declare -- genfile_path="${tests_path}/genfiles.py"
+
+cd "${git_repo_path}"
+
+if [ "$(pwd)" != "${git_repo_path}" ]; then
+    1>&2 echo -e "failed to switch cwd to ${git_repo_path@Q}"
+    exit 1
+fi
+
+if [ ! -e "${tests_path}/.gitignore" ]; then
+    git restore "${tests_path}/.gitignore"
+fi
+
+cargo build
+cargo test
+
+cd "${tests_path}"
+if [ "$(pwd)" != "${tests_path}" ]; then
+    1>&2 echo -e "failed to switch cwd to ${tests_path@Q}"
+    exit 1
+fi
+
+python3 "${genfile_path}"
+
+${slugify_filenames_path} -r .

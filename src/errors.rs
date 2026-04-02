@@ -5,6 +5,7 @@ use std::fmt::Display;
 #[derive(Debug, Clone)]
 pub enum Error {
     IOError(String),
+    ArgumentError(String),
     PatternCompilationError(String),
     ConfigLoadError(String),
     ConfigError(String),
@@ -25,10 +26,11 @@ impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,
-            "{}{}",
-            self.variant(),
+            "{}",
+            // self.variant(),
             match self {
                 Self::IOError(e) => e.to_string(),
+                Self::ArgumentError(e) => e.to_string(),
                 Self::PatternCompilationError(e) => e.to_string(),
                 Self::ConfigError(e) => e.to_string(),
                 Self::ConfigLoadError(e) => e.to_string(),
@@ -41,6 +43,7 @@ impl Error {
     pub fn variant(&self) -> String {
         match self {
             Error::IOError(_) => "IOError",
+            Error::ArgumentError(_) => "ArgumentError",
             Error::PatternCompilationError(_) => "PatternCompilationError",
             Error::ConfigError(_) => "ConfigError",
             Error::ConfigLoadError(_) => "ConfigLoadError",
