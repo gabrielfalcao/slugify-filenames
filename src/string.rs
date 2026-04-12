@@ -95,8 +95,8 @@ pub fn slugify_string<T: std::fmt::Display>(haystack: T, separator: char) -> Res
 
 pub fn string_pattern(separator: Option<char>) -> String {
     match separator {
-        Some('_' | DEFAULT_SEPARATOR) | None => format!("[^a-zA-Z0-9_-]+"),
-        Some(c) => format!("[^a-zA-Z0-9_{}-]+", c),
+        Some('_' | DEFAULT_SEPARATOR) | None => format!("[^a-zA-Z0-9_./-]+"),
+        Some(c) => format!("[^a-zA-Z0-9_./{}-]+", c),
     }
 }
 pub fn regex_pattern(separator: Option<char>) -> Result<Regex> {
