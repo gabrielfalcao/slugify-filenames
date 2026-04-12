@@ -1,5 +1,5 @@
 use crate::errors::{Error, Result};
-use heck::AsKebabCase;
+// use heck::AsKebabCase;
 use iocore::Path;
 use is_terminal::IsTerminal;
 use regex::Regex;
@@ -26,7 +26,14 @@ pub fn get_stdin_lines() -> Result<Vec<String>> {
 pub fn get_stdin_text() -> Result<String> {
     get_stdin_lines().map(|lines| lines.join("\n").to_string())
 }
-
+// pub fn extension_regex() -> Regex {
+//     Regex::new("^(?<file>(.*?)([^.]+))(?<sub_extensions>[.][a-zA-Z0-9]+)*(?<extension>[.][a-zA-Z0-9]+)$").unwrap()
+// }
+// pub fn path_extension<T: AsRef<std::path::Path>>(path_ref: T) -> Result<Path> {
+//     let path_str = Path::from(path_ref.as_ref()).to_string();
+//     let orig_path = Path::from(&path_str);
+//     extension_regex().
+// }
 pub fn slugify_path<T: AsRef<std::path::Path>>(path_ref: T, separator: char) -> Result<Path> {
     let path_str = Path::from(path_ref.as_ref()).to_string();
     let orig_path = Path::from(&path_str);
@@ -69,23 +76,21 @@ pub fn slugify_string<T: std::fmt::Display>(haystack: T, separator: char) -> Res
     let stage0_bytes = strip_ansi_escapes(&stage0);
     let stage1 = SString::new(&stage0_bytes).unchecked_safe();
     let stage2 = deunicode::deunicode_with_tofu(&stage1, &separator.to_string());
-    let stage3 = AsKebabCase(stage2).to_string();
-    let stage4 = if separator != '-' {
-        stage3
+    let stage3 = exp
+        .replace_all(&stage2, separator.to_string())
+        .to_string()
+        .as_str()
+        .to_string();
+    let stage4 = stage3.trim_matches(separator).to_lowercase().to_string();
+    let stage5 = if separator != '-' {
+        stage4
             .replace("-", &separator.to_string())
             .trim_matches('-')
             .to_string()
     } else {
-        stage3.clone().trim_matches('-').to_string()
+        stage4.clone().trim_matches('-').to_string()
     };
-
-    let stage5 = exp
-        .replace_all(&stage4, separator.to_string())
-        .to_string()
-        .as_str()
-        .to_string();
-    let stage6 = stage5.trim_matches(separator).to_lowercase().to_string();
-    Ok(stage6)
+    Ok(stage5)
 }
 
 pub fn string_pattern(separator: Option<char>) -> String {

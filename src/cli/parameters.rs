@@ -48,7 +48,7 @@ pub fn argv_fallback_to_stdin_lines(val: &str) -> ::std::result::Result<String, 
     let text = if val.is_empty() {
         match get_stdin_text() {
             Ok(lines) => lines,
-            Err(error) => {
+            Err(_) => {
                 return Err(format!("missing TEXT via command-line argument(s) or stdin"))
             }
         }
