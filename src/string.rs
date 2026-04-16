@@ -2,10 +2,12 @@ use crate::errors::{Error, Result};
 // use heck::AsKebabCase;
 use iocore::Path;
 use is_terminal::IsTerminal;
+use regex::Captures;
 use regex::Regex;
 use sanitation::SString;
 use std::convert::AsRef;
 use std::io::BufRead;
+use std::string::ToString;
 use strip_ansi_escapes::strip as strip_ansi_escapes;
 
 pub const DEFAULT_SEPARATOR: char = '-';
@@ -26,14 +28,6 @@ pub fn get_stdin_lines() -> Result<Vec<String>> {
 pub fn get_stdin_text() -> Result<String> {
     get_stdin_lines().map(|lines| lines.join("\n").to_string())
 }
-// pub fn extension_regex() -> Regex {
-//     Regex::new("^(?<file>(.*?)([^.]+))(?<sub_extensions>[.][a-zA-Z0-9]+)*(?<extension>[.][a-zA-Z0-9]+)$").unwrap()
-// }
-// pub fn path_extension<T: AsRef<std::path::Path>>(path_ref: T) -> Result<Path> {
-//     let path_str = Path::from(path_ref.as_ref()).to_string();
-//     let orig_path = Path::from(&path_str);
-//     extension_regex().
-// }
 pub fn slugify_path<T: AsRef<std::path::Path>>(path_ref: T, separator: char) -> Result<Path> {
     let path_str = Path::from(path_ref.as_ref()).to_string();
     let orig_path = Path::from(&path_str);
@@ -101,6 +95,35 @@ pub fn string_pattern(separator: Option<char>) -> String {
 }
 pub fn regex_pattern(separator: Option<char>) -> Result<Regex> {
     Ok(regex::Regex::new(&string_pattern(separator))?)
+}
+
+pub fn extension_regex() -> Result<Regex> {
+    Ok(Regex::new(
+        "^(?<path>(.*?)([^.]+))(?<sub_extensions>[.][a-zA-Z0-9]+)*(?<extension>[.][a-zA-Z0-9]+)?(?<rest>[.a-zA-Z0-9_-/]+?.*?)?$",
+    )?)
+}
+pub fn slugify_path_regex<T: ToString>(path_ref: T) -> Result<Path> {
+    let path_str = path_ref.to_string();
+    let orig_path = Path::from(&path_str);
+    let path = orig_path.absolute()?;
+    let parent = path.parent().unwrap();
+    let path = Path::new(path.name());
+    let caps = path_extension(&path)?;
+    let filename = caps.name("path").unwrap().as_str().to_string();
+    let sub_extensions = caps.name("sub_extensions").unwrap().as_str().to_string();
+    let extension = caps.name("extension").unwrap().as_str().to_string();
+    let result = parent.join(format!("{filename}.{sub_extensions}.{extension}"));
+    return Ok(result);
+}
+pub fn path_extension<T: ToString>(path_str: T) -> Result<Captures<'static>> {
+    let regex = extension_regex()?;
+    let haystack = path_str.to_string();
+    match regex.captures(haystack.clone().leak()) {
+        Some(caps) => Ok(caps),
+        None => Err(Error::ArgumentError(format!(
+            "cannot match regex {regex:#?} to haystack {haystack:#?}"
+        ))),
+    }
 }
 
 #[cfg(test)]
