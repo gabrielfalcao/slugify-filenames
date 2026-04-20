@@ -56,5 +56,11 @@ deunicode = "1.6.2"
 sanitation = "1.0.3"
 
 [dev-dependencies]
+assert_cmd = "2.2.0"
+assert_fs = "1.1.3"
+benchmarking = "0.4.13"
 debug-et-diagnostics = "0.3.1"
+dir-diff = "0.3.3"
 iocore-test = "3.1.0"
+k9 = "0.12.0"
+trycmd = "1.2.0"

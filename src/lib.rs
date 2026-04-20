@@ -6,8 +6,9 @@ pub use cli::{
 
 pub mod errors;
 pub use errors::{Error, Result};
+
 pub mod string;
 pub use string::{
-    get_stdin_lines, get_stdin_text, regex_pattern, slugify_string, string_pattern,
-    DEFAULT_SEPARATOR,
+    extension_regex, get_stdin_lines, get_stdin_text, path_extension, regex_pattern, slugify_path,
+    slugify_path_regex, slugify_string, string_pattern, DEFAULT_SEPARATOR,
 };
