@@ -28,15 +28,38 @@ pub fn get_stdin_lines() -> Result<Vec<String>> {
 pub fn get_stdin_text() -> Result<String> {
     get_stdin_lines().map(|lines| lines.join("\n").to_string())
 }
+pub fn undupe<T: ToString>(name: T) -> String {
+    let haystack = name.to_string();
+    // let regexes = [".", "/", "_", "-"].map(|c|format!("([{c}])")).map(|class|Regex::new(class.as_str()).unwrap())
+
+    let regex = Regex::new("([./_-])($1)+").unwrap();
+    regex.replace(&haystack, "$1").to_string()
+}
+pub fn name_splitext<T: ToString>(name: T) -> Option<(String, String)> {
+    let haystack = name.to_string();
+    let regex = Regex::new(
+        "^(?<path>(.*?)([^.]+))(?<sub_extensions>[.][a-zA-Z0-9]+)*(?<extension>[.][a-zA-Z0-9]+)?(?<rest>[.a-zA-Z0-9_/-]+?.*?)?$",
+    ).unwrap();
+    let found = regex.captures(&haystack)?;
+    let path = found.name("path").map(|m| m.as_str().to_string())?;
+    let sub_extensions = found
+        .name("sub_extensions")
+        .map(|m| m.as_str().to_string())?;
+    let extension = found.name("extension").map(|m| m.as_str().to_string())?;
+
+    let ext = [sub_extensions, extension].join(".").to_string();
+    let path = path.to_string();
+    Some((undupe(path), undupe(ext)))
+}
+
 pub fn slugify_path<T: AsRef<std::path::Path>>(path_ref: T, separator: char) -> Result<Path> {
     let path_str = Path::from(path_ref.as_ref()).to_string();
     let orig_path = Path::from(&path_str);
     let path = orig_path.canonicalize()?;
     let parent = path.parent();
     let path = Path::new(path.name());
-    let slugified_filename = match path.extension() {
-        Some(extension) => {
-            let base = path.without_extension().name();
+    let slugified_filename = match name_splitext(&path.name()) {
+        Some((base, extension)) => {
             let slugified_base = slugify_string(&base, separator)?;
             let slugified_extension = slugify_string(&extension, separator)?;
             let slugified_filename = format!("{slugified_base}.{slugified_extension}");
@@ -89,8 +112,9 @@ pub fn slugify_string<T: std::fmt::Display>(haystack: T, separator: char) -> Res
 
 pub fn string_pattern(separator: Option<char>) -> String {
     match separator {
-        Some('_' | '.' | '/' | DEFAULT_SEPARATOR) | None => format!("[^a-zA-Z0-9_./-]+"),
-        Some(c) => format!("[^a-zA-Z0-9_./{c}-]+"),
+        Some(DEFAULT_SEPARATOR) | None => format!("[^a-zA-Z0-9.-]+"),
+        Some('_') => format!("[^a-zA-Z0-9._-]+"),
+        Some(c) => format!("[^a-zA-Z0-9.{c}-]+"),
     }
 }
 pub fn regex_pattern(separator: Option<char>) -> Result<Regex> {
