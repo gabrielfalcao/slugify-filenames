@@ -10,8 +10,8 @@ default-run = "slugify-string"
 [package.metadata]
 targets = [
     "aarch64-apple-darwin",
-    "x86_64-unknown-linux-gnu",
-    "aarch64-unknown-linux-gnu",
+    # "x86_64-unknown-linux-gnu",
+    # "aarch64-unknown-linux-gnu",
 ]
 
 
@@ -26,14 +26,14 @@ bench = false
 
 [[bin]]
 name = "slugify-filenames"
-path = "slugify-filenames.rs"
+path = "src/bin/slugify-filenames.rs"
 doctest = false
 bench = false
 doc = false
 
 [[bin]]
 name = "slugify-string"
-path = "slugify-string.rs"
+path = "src/bin/slugify-string.rs"
 doctest = false
 bench = false
 doc = false
