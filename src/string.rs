@@ -19,7 +19,7 @@ pub fn slugify_string(haystack: impl std::fmt::Display, separator: char) -> Resu
     let stage0_bytes = strip_ansi_escapes(&stage0.to_string());
     let stage0_1 = String::from_utf8_lossy(&stage0_bytes);
     let mut stage1_parts = list_of_trimmed_strings(stage0_1.split('\n').into_iter()).join("\n");
-    dbg!(&exp, &stage0, &stage0_1, &stage1_parts);
+    // dbg!(&exp, &stage0, &stage0_1, &stage1_parts);
     for part in ["\t", "\\n", "\n"] {
         dbg!(&part, &stage1_parts);
         stage1_parts = list_of_trimmed_strings(stage1_parts.split(part).into_iter()).join("\n");
@@ -43,7 +43,7 @@ pub fn slugify_string(haystack: impl std::fmt::Display, separator: char) -> Resu
         .as_str()
         .to_string();
     let stage5 = stage4.trim_matches(separator).to_lowercase().to_string();
-    dbg!(&stage1, &stage2, &stage3, &stage4, &stage5);
+    // dbg!(&stage1, &stage2, &stage3, &stage4, &stage5);
     Ok(stage5)
 }
 
