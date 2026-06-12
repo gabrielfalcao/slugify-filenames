@@ -21,7 +21,7 @@ pub fn slugify_string(haystack: impl std::fmt::Display, separator: char) -> Resu
     let mut stage1_parts = list_of_trimmed_strings(stage0_1.split('\n').into_iter()).join("\n");
     // dbg!(&exp, &stage0, &stage0_1, &stage1_parts);
     for part in ["\t", "\\n", "\n"] {
-        dbg!(&part, &stage1_parts);
+        // dbg!(&part, &stage1_parts);
         stage1_parts = list_of_trimmed_strings(stage1_parts.split(part).into_iter()).join("\n");
     }
     let stage1 = stage1_parts.to_string();
