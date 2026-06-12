@@ -1,10 +1,11 @@
 use crate::errors::Result;
-use any_ascii::any_ascii;
 use regex::Regex;
 pub const DEFAULT_SEPARATOR: char = '-';
-use heck::AsKebabCase;
 use std::string::ToString;
 use strip_ansi_escapes::strip as strip_ansi_escapes;
+// use any_ascii::any_ascii;
+// use heck::AsKebabCase;
+
 
 pub fn list_of_trimmed_strings<T: Iterator<Item: std::fmt::Display>>(items: T) -> Vec<String> {
     items
