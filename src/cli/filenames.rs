@@ -1,8 +1,8 @@
 use crate::cli::parameters::SlugifyParameters;
 use crate::cli::verbosity::Verbosity;
+use std::time::SystemTime;
 
 pub use crate::errors::{Error, Result};
-
 use clap::{ArgAction, Parser};
 use iocore::Path;
 
@@ -46,6 +46,15 @@ pub struct SlugifyFilenames {
 
     #[arg(short = 'I', long, help = "path to .slugifyignore file")]
     slugify_ignore: Option<Path>,
+
+    #[arg(
+        long,
+        help = "log to a filename in addition to stderr (or stdout if --log-to-stdout is passed in)"
+    )]
+    log_file: Option<Path>,
+
+    #[arg(long, help = "log to stdout instead of stderr")]
+    log_to_stdout: bool,
 }
 impl SlugifyFilenames {
     pub fn actual_verbosity(&self) -> Verbosity {
@@ -58,25 +67,63 @@ impl SlugifyFilenames {
     }
     pub fn println(&self, string: impl std::fmt::Display, verbosity: Verbosity) {
         if self.verbosity_matches(verbosity) {
-            println!("{}", string)
+            match self.verbosity {
+                Verbosity::Warning => {
+                    log::warn!("{}", string)
+                }
+                Verbosity::Info => {
+                    log::info!("{}", string)
+                }
+                Verbosity::Debug => {
+                    log::debug!("{}", string)
+                }
+                Verbosity::Hint => {
+                    log::info!("{}", string)
+                }
+                Verbosity::None | Verbosity::Quiet => {
+                    log::trace!("{}", string)
+                }
+            }
         }
     }
     pub fn eprintln(&self, string: impl std::fmt::Display, verbosity: Verbosity) {
         if self.verbosity_matches(verbosity) {
-            eprintln!("{}", string)
+            match self.verbosity {
+                Verbosity::Warning => {
+                    log::warn!("{}", string)
+                }
+                Verbosity::Info => {
+                    log::error!("{}", string)
+                }
+                Verbosity::Debug => {
+                    log::debug!("{}", string)
+                }
+                Verbosity::Hint => {
+                    log::warn!("{}", string)
+                }
+                Verbosity::None | Verbosity::Quiet => {
+                    log::trace!("{}", string)
+                }
+            }
         }
     }
     pub fn paths(&self) -> Vec<Path> {
         let paths = if self.paths.is_empty() {
             let cwd = Path::cwd().try_canonicalize();
-            self.println(format!("no paths provided, assuming {}", cwd.abbreviate()), Verbosity::Debug);
+            self.println(
+                format!("no paths provided, assuming {}", cwd.abbreviate()),
+                Verbosity::Debug,
+            );
             cwd.list().unwrap_or_default()
         } else {
             self.paths.clone()
         };
         let all_paths_are_dirs = paths.iter().all(|path| path.try_canonicalize().is_dir());
         if !self.recursive && all_paths_are_dirs {
-            self.eprintln("all target paths are directories but -r/--recursive was not provided", Verbosity::Hint);
+            self.eprintln(
+                "all target paths are directories but -r/--recursive was not provided",
+                Verbosity::Hint,
+            );
         }
         paths
             .into_iter()
@@ -148,13 +195,19 @@ impl SlugifyFilenames {
 
         let mut count = 0;
         let new_filename = Path::join_extension(&new_name, new_extension.clone());
-        let mut new_path = path.with_filename(&new_filename);
+        let original_new_path = path.with_filename(&new_filename);
+        let mut new_path = original_new_path.clone();
         while path.name() != new_path.name() && new_path.exists() {
             let new_filename =
                 Path::join_extension(format!("{new_name}.{count}"), new_extension.clone());
             new_path = path.with_filename(&new_filename);
             count += 1;
         }
+        log::info!(
+            "using new name {:#?} since {:#?} already exists",
+            new_path.to_string(),
+            original_new_path.to_string()
+        );
         Ok(new_path)
     }
     pub fn slugify_file_path(&self, path: &Path) -> Result<Path> {
@@ -162,7 +215,10 @@ impl SlugifyFilenames {
         let new_path = self.unique_new_path(&path)?;
         if path.to_string() != new_path.to_string() {
             if self.dry_run {
-                self.println(format!("would rename {path} to {new_path}"), Verbosity::Info);
+                self.println(
+                    format!("would rename {path} to {new_path}"),
+                    Verbosity::Info,
+                );
                 return Ok(new_path);
             }
             if path.is_dir() && new_path.is_dir() && self.force {
@@ -199,8 +255,34 @@ impl SlugifyFilenames {
         }
         Ok(())
     }
+    fn initialize(&mut self) -> std::result::Result<(), fern::InitError> {
+        let mut chain = fern::Dispatch::new().format(|out, message, record| {
+            out.finish(format_args!(
+                "[{} {} {}] {}",
+                humantime::format_rfc3339_seconds(SystemTime::now()),
+                record.level(),
+                record.target(),
+                message
+            ))
+        });
+        chain = if self.log_to_stdout {
+            chain.chain(std::io::stdout())
+        } else {
+            chain.chain(std::io::stderr())
+        };
+        chain = if let Some(path) = self.log_file.clone() {
+            chain.chain(fern::log_file(path.try_canonicalize().to_string())?)
+        } else {
+            chain
+        };
+        chain.apply()?;
+        Ok(())
+    }
     pub fn execute(args: Vec<String>) -> Result<()> {
-        let cli = SlugifyFilenames::parse_from(args);
+        // export RUST_LOG=debug
+        let mut cli = SlugifyFilenames::parse_from(args);
+        cli.initialize()?;
+
         let ignores = cli.slugify_ignore_lines()?;
         let paths = cli.paths();
 
@@ -226,9 +308,10 @@ impl SlugifyFilenames {
 
         if total_filtered.is_some() && total_filtered.clone().unwrap() == 0 {
             if total_paths > 0 {
-                cli.println(format!(
-                    "total paths is {total_paths} but all have been ignored: "
-                ), Verbosity::Warning);
+                cli.println(
+                    format!("total paths is {total_paths} but all have been ignored: "),
+                    Verbosity::Warning,
+                );
                 for path in paths.iter() {
                     let path = path.relative_to_cwd();
                     cli.println(format!("    {path}"), Verbosity::Warning);

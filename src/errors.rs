@@ -60,6 +60,11 @@ impl From<iocore::Error> for Error {
         Error::IOError(format!("{}", e))
     }
 }
+impl From<fern::InitError> for Error {
+    fn from(e: fern::InitError) -> Self {
+        Error::ConfigError(format!("{}", e))
+    }
+}
 impl From<regex::Error> for Error {
     fn from(e: regex::Error) -> Self {
         Error::PatternCompilationError(format!("{}", e))
