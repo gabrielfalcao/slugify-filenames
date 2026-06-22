@@ -50,6 +50,9 @@ iocore = { version = "3.1.0" }
 any_ascii = "0.3.3"
 heck = "0.5.0"
 strip-ansi-escapes = "0.2.1"
+log = "0.4.33"
+fern = "0.7.1"
+env_logger = "0.11.10"
 
 [dev-dependencies]
 debug-et-diagnostics = "0.3.1"
