@@ -40,7 +40,7 @@ pub fn slugify_string(haystack: impl std::fmt::Display) -> Result<String> {
 
 #[cfg(test)]
 mod slugify_string_tests {
-    use crate::{assert_slugify_string, slugify_string, Error, Result};
+    use crate::{assert_slugify_string, slugify_string, Result};
 
     #[test]
     fn test_slugify_filename() -> Result<()> {
