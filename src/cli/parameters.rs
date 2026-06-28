@@ -11,10 +11,7 @@ pub struct SlugifyParameters {
 
 impl SlugifyParameters {
     pub fn slugify_string(&self, string: impl std::fmt::Display) -> Result<String> {
-        Ok(crate::string::slugify_string(
-            string,
-            self.non_option_separator(),
-        )?)
+        Ok(crate::string::slugify_string(string)?)
     }
     pub fn separator(&self) -> Option<char> {
         match self.separator {

@@ -1,6 +1,6 @@
 pub mod cli;
-pub use cli::{SlugifyFilenames, SlugifyParameters, SlugifyString, heck_aliases};
+pub use cli::{heck_aliases, SlugifyFilenames, SlugifyParameters, SlugifyString};
 pub mod errors;
 pub use errors::{Error, Result};
 pub mod string;
-pub use string::{regex_pattern, slugify_string, string_pattern, DEFAULT_SEPARATOR};
+pub use string::{slugify_string, STRING_PATTERN, DEFAULT_SEPARATOR};

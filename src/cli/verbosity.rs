@@ -3,7 +3,7 @@ use clap::ValueEnum;
 
 use crate::heck_aliases;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter, Debug};
+use std::fmt::{Debug, Display, Formatter};
 
 #[derive(Clone, Copy, Deserialize, Serialize, Ord, PartialOrd, Eq, PartialEq, Default)]
 pub enum Verbosity {
