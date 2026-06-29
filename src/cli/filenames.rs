@@ -197,6 +197,9 @@ impl SlugifyFilenames {
         let new_filename = Path::join_extension(&new_name, new_extension.clone());
         let original_new_path = path.with_filename(&new_filename);
         let mut new_path = original_new_path.clone();
+        if !new_path.exists() {
+            return Ok(new_path)
+        }
         while path.name() != new_path.name() && new_path.exists() {
             let new_filename =
                 Path::join_extension(format!("{new_name}.{count}"), new_extension.clone());
