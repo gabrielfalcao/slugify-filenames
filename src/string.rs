@@ -43,10 +43,9 @@ pub fn slugify_string(haystack: impl std::fmt::Display) -> Result<String> {
     let stage1 = any_ascii(&stage1_parts);
     let stage2 = STRING_REGEX
         .replace_all(&stage1, r"-")
-        .to_lowercase()
         .to_string();
     let stage3 = UNNEEDED_UNIQUEFY_REGEX.replace_all(&stage2, "").to_string();
-    let mut stage4 = stage3.to_lowercase().to_string();
+    let mut stage4 = stage3.to_string();
     for c in SPECIAL_PATTERN_CHARS.iter().map(|c| *c) {
         let dupe_pattern = format!("[{c}][c]+");
         let re = Regex::new(&dupe_pattern)?;
