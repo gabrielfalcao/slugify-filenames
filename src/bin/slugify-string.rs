@@ -1,4 +1,4 @@
-use slugify::{Result, SlugifyString};
+use slugify_filenames::{Result, SlugifyString};
 
 fn main() -> Result<()> {
     Ok(SlugifyString::execute(

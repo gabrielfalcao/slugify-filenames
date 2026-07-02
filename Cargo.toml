@@ -16,7 +16,7 @@ targets = [
 
 
 [lib]
-name = "slugify"
+name = "slugify_filenames"
 path = "src/lib.rs"
 # crate-type = ["dylib"]
 
