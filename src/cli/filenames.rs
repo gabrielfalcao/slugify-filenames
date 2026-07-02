@@ -196,7 +196,7 @@ impl SlugifyFilenames {
         let mut count = 0;
         let new_filename = Path::join_extension(&new_name, new_extension.clone());
         let original_new_path = path.with_filename(&new_filename);
-        let mut new_path = if self.parameters.lowercase {
+        let mut new_path = if self.parameters.lowercase() {
             Path::new(original_new_path.to_string().to_lowercase());
         } else {
             original_new_path.clone();
