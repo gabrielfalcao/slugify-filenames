@@ -20,6 +20,18 @@ pub fn list_of_trimmed_strings<T: Iterator<Item: std::fmt::Display>>(items: T) -
         .map(|part| part.to_string().trim().to_string())
         .collect::<Vec<String>>()
 }
+
+/// `slugify_string` is the core function in this package.
+///
+/// *Example*
+///
+/// ```
+/// use slugify_filenames::slugify_string;
+///
+/// let result = slugify_string("Imagine Thís string, àscii safê and filename-sáfè");
+/// assert_eq!(result, "imagine-this-string-ascii-safe-and-filename-safe");
+/// ```
+///
 pub fn slugify_string(haystack: impl std::fmt::Display) -> Result<String> {
     let stage0 = haystack.to_string();
     let stage0_bytes = strip_ansi_escapes(&stage0.to_string());
