@@ -7,6 +7,13 @@ use clap::Args;
 pub struct SlugifyParameters {
     #[arg(short, long, default_value = "-")]
     separator: Option<char>,
+
+    #[arg(
+        short,
+        long,
+        help = "lowercase slugified filenames. The default is to not change the case so that, for example, a file named \"README.md\" does not become \"readme.md\""
+    )]
+    lowercase: bool,
 }
 
 impl SlugifyParameters {
@@ -18,6 +25,9 @@ impl SlugifyParameters {
             Some(separator) => Some(separator),
             None => None,
         }
+    }
+    pub fn lowercase(&self) -> bool {
+        self.lowercase
     }
     pub fn non_option_separator(&self) -> char {
         match self.separator {
