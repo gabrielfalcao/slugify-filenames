@@ -198,7 +198,7 @@ impl SlugifyFilenames {
         let original_new_path = path.with_filename(&new_filename);
         let mut new_path = original_new_path.clone();
         if !new_path.exists() {
-            return Ok(new_path)
+            return Ok(new_path);
         }
         while path.name() != new_path.name() && new_path.exists() {
             let new_filename =
@@ -259,14 +259,21 @@ impl SlugifyFilenames {
         Ok(())
     }
     fn initialize(&mut self) -> std::result::Result<(), fern::InitError> {
-        let mut chain = fern::Dispatch::new().format(|out, message, record| {
-            out.finish(format_args!(
-                "[{} {} {}] {}",
-                humantime::format_rfc3339_seconds(SystemTime::now()),
-                record.level(),
-                record.target(),
-                message
-            ))
+        let verbosity_level = self.verbose;
+        let mut chain = fern::Dispatch::new().format(move |out, message, record| {
+            if verbosity_level > 1 {
+                out.finish(format_args!(
+                    "[{} {} {}] {}",
+                    humantime::format_rfc3339_seconds(SystemTime::now()),
+                    record.level(),
+                    record.target(),
+                    message
+                ))
+            } else if verbosity_level == 1 {
+                out.finish(format_args!("[{}] {}", record.level(), message))
+            } else {
+                out.finish(format_args!("{}", message))
+            }
         });
         chain = if self.log_to_stdout {
             chain.chain(std::io::stdout())
