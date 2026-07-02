@@ -2,10 +2,15 @@ use crate::errors::Result;
 use any_ascii::any_ascii;
 use regex::Regex;
 use std::string::ToString;
+use std::sync::LazyLock;
 use strip_ansi_escapes::strip as strip_ansi_escapes;
 
 pub const DEFAULT_SEPARATOR: char = '-';
-pub const STRING_PATTERN: &'static str = r"[^a-zA-Z0-9_.-]+";
+pub static STRING_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"[^a-zA-Z0-9_.-]+").expect("STRING_REGEX"));
+pub static UNNEEDED_UNIQUEFY_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"[0][.][a-zA-Z0-9]+$").expect("UNNEEDED_UNIQUEFY_REGEX"));
+
 pub const SPECIAL_PATTERN_CHARS: [char; 3] = ['_', '.', '-'];
 
 pub fn list_of_trimmed_strings<T: Iterator<Item: std::fmt::Display>>(items: T) -> Vec<String> {
@@ -24,18 +29,21 @@ pub fn slugify_string(haystack: impl std::fmt::Display) -> Result<String> {
         stage1_parts = list_of_trimmed_strings(stage1_parts.split(part).into_iter()).join("\n");
     }
     let stage1 = any_ascii(&stage1_parts);
-    let main_regex = Regex::new(&STRING_PATTERN)?;
-    let stage2 = main_regex.replace_all(&stage1, r"-").to_string();
-    let mut stage3 = stage2.to_lowercase().to_string();
+    let stage2 = STRING_REGEX
+        .replace_all(&stage1, r"-")
+        .to_lowercase()
+        .to_string();
+    let stage3 = UNNEEDED_UNIQUEFY_REGEX.replace_all(&stage2, "").to_string();
+    let mut stage4 = stage3.to_lowercase().to_string();
     for c in SPECIAL_PATTERN_CHARS.iter().map(|c| *c) {
         let dupe_pattern = format!("[{c}][c]+");
         let re = Regex::new(&dupe_pattern)?;
 
-        stage3 = stage3.trim_start_matches(c).to_string();
-        stage3 = stage3.trim_end_matches(c).to_string();
-        stage3 = re.replace_all(&stage3, &c.to_string()).to_string();
+        stage4 = re.replace_all(&stage4, &c.to_string()).to_string();
+        stage4 = stage4.trim_start_matches(c).to_string();
+        stage4 = stage4.trim_end_matches(c).to_string();
     }
-    Ok(stage3)
+    Ok(stage4)
 }
 
 #[cfg(test)]
