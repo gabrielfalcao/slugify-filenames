@@ -32,7 +32,7 @@ pub fn list_of_trimmed_strings<T: Iterator<Item: std::fmt::Display>>(items: T) -
 /// assert_eq!(result, "imagine-this-string-ascii-safe-and-filename-safe");
 /// ```
 ///
-pub fn slugify_string(haystack: impl std::fmt::Display) -> Result<String> {
+pub fn slugify_string<T: std::string::ToString>(haystack: T, downcase: bool) -> Result<String> {
     let stage0 = haystack.to_string();
     let stage0_bytes = strip_ansi_escapes(&stage0.to_string());
     let stage0_1 = String::from_utf8_lossy(&stage0_bytes);
@@ -54,7 +54,12 @@ pub fn slugify_string(haystack: impl std::fmt::Display) -> Result<String> {
         stage4 = stage4.trim_start_matches(c).to_string();
         stage4 = stage4.trim_end_matches(c).to_string();
     }
-    Ok(stage4)
+    let stage5 = if downcase {
+        stage4.to_lowercase()
+    } else {
+        stage4
+    };
+    Ok(stage5)
 }
 
 #[cfg(test)]
@@ -71,21 +76,26 @@ mod slugify_string_tests {
     }
     #[test]
     fn test_slugify_string() -> Result<()> {
-        assert_slugify_string!("  Foo  Baz  ", "foo-baz");
-        assert_slugify_string!("  Foo  Baz  ", "foo-baz");
+        assert_slugify_string!(         "  Foo  Baz  ", "Foo-Baz");
+        assert_slugify_string!(downcase "  Foo  Baz  ", "foo-baz");
         Ok(())
     }
 
     #[test]
     fn test_unicode_data_cyrilic_letters() -> Result<()> {
-        assert_slugify_string!("ÐÐµ, ÑÑÐŸ ÑÐ°Ð·Ð±ÑÐŽÐžÐ» Ð²Ð°Ñ. Ð¯ Ð¿ÑÐŸÑÑÐŸ ÑÐ»ÐžÑÐºÐŸÐŒ Ð²ÐŸÐ·Ð±ÑÐ¶ÐŽÐµÐœ í Ÿíµµ", "ddu-nndy-nddegd-d--ndzdzd-d2ddegn.-d--d-ndynndy-nd-dzndodydoe-d2dyd-d--ndpdzdudoe-i-yiuu");
+        assert_slugify_string!(downcase "ÐÐµ, ÑÑÐŸ ÑÐ°Ð·Ð±ÑÐŽÐžÐ» Ð²Ð°Ñ. Ð¯ Ð¿ÑÐŸÑÑÐŸ ÑÐ»ÐžÑÐºÐŸÐŒ Ð²ÐŸÐ·Ð±ÑÐ¶ÐŽÐµÐœ í Ÿíµµ", "ddu-nndy-nddegd-d--ndzdzd-d2ddegn.-d--d-ndynndy-nd-dzndodydoe-d2dyd-d--ndpdzdudoe-i-yiuu");
+        assert_slugify_string!(         "ÐÐµ, ÑÑÐŸ ÑÐ°Ð·Ð±ÑÐŽÐžÐ» Ð²Ð°Ñ. Ð¯ Ð¿ÑÐŸÑÑÐŸ ÑÐ»ÐžÑÐºÐŸÐŒ Ð²ÐŸÐ·Ð±ÑÐ¶ÐŽÐµÐœ í Ÿíµµ", "DDu-NNDY-NDdegD-D--NDZDzD-D2DdegN.-D--D-NDYNNDY-ND-DzNDoDYDOe-D2DYD-D--NDPDZDuDoe-i-Yiuu");
         Ok(())
     }
 
     #[macro_export]
     macro_rules! assert_slugify_string {
+        (downcase $haystack:expr, $expected_to_be_slugified:expr) => {{
+            assert_eq!(slugify_string($haystack, true)?, $expected_to_be_slugified);
+        }};
+
         ($haystack:expr, $expected_to_be_slugified:expr) => {{
-            assert_eq!(slugify_string($haystack)?, $expected_to_be_slugified);
+            assert_eq!(slugify_string($haystack, false)?, $expected_to_be_slugified);
         }};
     }
 }

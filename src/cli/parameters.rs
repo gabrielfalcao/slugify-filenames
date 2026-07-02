@@ -17,8 +17,8 @@ pub struct SlugifyParameters {
 }
 
 impl SlugifyParameters {
-    pub fn slugify_string(&self, string: impl std::fmt::Display) -> Result<String> {
-        Ok(crate::string::slugify_string(string)?)
+    pub fn slugify_string<T: std::string::ToString>(&self, string: T) -> Result<String> {
+        Ok(crate::string::slugify_string(string, self.lowercase)?)
     }
     pub fn separator(&self) -> Option<char> {
         match self.separator {
