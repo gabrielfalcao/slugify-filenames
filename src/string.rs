@@ -9,7 +9,8 @@ pub const DEFAULT_SEPARATOR: char = '-';
 pub static STRING_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"[^a-zA-Z0-9_.-]+").expect("STRING_REGEX"));
 pub static UNNEEDED_UNIQUEFY_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"[0][.][a-zA-Z0-9]+$").expect("UNNEEDED_UNIQUEFY_REGEX"));
+    LazyLock::new(|| Regex::new(r"[0][.](?<extension>[a-zA-Z0-9]+)$").expect("UNNEEDED_UNIQUEFY_REGEX"));
+
 
 pub const SPECIAL_PATTERN_CHARS: [char; 3] = ['_', '.', '-'];
 
@@ -30,6 +31,9 @@ pub fn list_of_trimmed_strings<T: Iterator<Item: std::fmt::Display>>(items: T) -
 ///
 /// let result = slugify_string("Imagine Thís string, àscii safê and filename-sáfè");
 /// assert_eq!(result, "imagine-this-string-ascii-safe-and-filename-safe");
+///
+/// let result = slugify_string("generated_file_ymf1a3ymf1a3ymf1.png.0.gz");
+/// assert_eq!(result, "generated_file_ymf1a3ymf1a3ymf1.png.gz");
 /// ```
 ///
 pub fn slugify_string<T: std::string::ToString>(haystack: T, downcase: bool) -> Result<String> {
@@ -44,7 +48,7 @@ pub fn slugify_string<T: std::string::ToString>(haystack: T, downcase: bool) -> 
     let stage2 = STRING_REGEX
         .replace_all(&stage1, r"-")
         .to_string();
-    let stage3 = UNNEEDED_UNIQUEFY_REGEX.replace_all(&stage2, "").to_string();
+    let stage3 = UNNEEDED_UNIQUEFY_REGEX.replace_all(&stage2, r"\1").to_string();
     let mut stage4 = stage3.to_string();
     for c in SPECIAL_PATTERN_CHARS.iter().map(|c| *c) {
         let dupe_pattern = format!("[{c}][c]+");
