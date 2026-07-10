@@ -55,6 +55,11 @@ pub struct SlugifyFilenames {
 
     #[arg(long, help = "log to stdout instead of stderr")]
     log_to_stdout: bool,
+
+    #[arg(short = 'C', long, help = "do not verify checksum and delete duplicate files. (linearly faster in relation to the number of duplicate files present)")]
+    no_checksum_same_name: bool,
+
+
 }
 impl SlugifyFilenames {
     pub fn actual_verbosity(&self) -> Verbosity {
@@ -200,6 +205,12 @@ impl SlugifyFilenames {
 
         if !new_path.exists() {
             return Ok(new_path);
+        } else  {
+            let source_checksum = sha512_sum(&path);
+            let target_checksum = sha512_sum(&new_path);
+            if source_checksum == target_checksum {
+                return Ok(new_path)
+            }
         }
         while path.name() != new_path.name() && new_path.exists() {
             let new_filename =
