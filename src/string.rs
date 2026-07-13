@@ -60,13 +60,13 @@ pub fn slugify_string<T: std::string::ToString>(haystack: T, downcase: bool) -> 
         stage4 = stage4.trim_start_matches(c).to_string();
         stage4 = stage4.trim_end_matches(c).to_string();
     }
-    let stage5 = DUPE_SEPARATOR_REGEX.replace_all(stage4, "-").to_string();
+    let stage5 = DUPE_SEPARATOR_REGEX.replace_all(&stage4, "-").to_string();
     let stage6 = if downcase {
         stage5.to_lowercase()
     } else {
-        stage5
+        stage5.clone()
     };
-    Ok(stage5)
+    Ok(stage6)
 }
 
 #[cfg(test)]

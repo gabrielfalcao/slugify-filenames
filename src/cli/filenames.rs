@@ -1,7 +1,9 @@
 use crate::cli::parameters::SlugifyParameters;
 use crate::cli::verbosity::Verbosity;
 use std::time::SystemTime;
-
+use heck::ToPascalCase;
+use heck::ToSnakeCase;
+use heck::ToKebabCase;
 pub use crate::errors::{Error, Result};
 use clap::{ArgAction, Parser};
 use iocore::Path;
@@ -199,6 +201,12 @@ impl SlugifyFilenames {
         let mut new_path = original_new_path.clone();
 
         if !new_path.exists() {
+            return Ok(new_path);
+        } else if path.name() == new_path.name().to_pascal_case() {
+            return Ok(new_path);
+        } else if path.name() == new_path.name().to_upper_snake_case() {
+            return Ok(new_path);
+        } else if path.name() == new_path.name().to_upper_kebab_case() {
             return Ok(new_path);
         }
         while path.name() != new_path.name() && new_path.exists() {
