@@ -8,9 +8,11 @@ use strip_ansi_escapes::strip as strip_ansi_escapes;
 pub const DEFAULT_SEPARATOR: char = '-';
 pub static STRING_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"[^a-zA-Z0-9_.-]+").expect("STRING_REGEX"));
-pub static UNNEEDED_UNIQUEFY_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"[0][.](?<extension>[a-zA-Z0-9]+)$").expect("UNNEEDED_UNIQUEFY_REGEX"));
-
+pub static UNNEEDED_UNIQUEFY_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"[0][.](?<extension>[a-zA-Z0-9]+)$").expect("UNNEEDED_UNIQUEFY_REGEX")
+});
+pub static DUPE_SEPARATOR_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"[-][-]+").expect("STRING_REGEX"));
 
 pub const SPECIAL_PATTERN_CHARS: [char; 3] = ['_', '.', '-'];
 
@@ -45,10 +47,10 @@ pub fn slugify_string<T: std::string::ToString>(haystack: T, downcase: bool) -> 
         stage1_parts = list_of_trimmed_strings(stage1_parts.split(part).into_iter()).join("\n");
     }
     let stage1 = any_ascii(&stage1_parts);
-    let stage2 = STRING_REGEX
-        .replace_all(&stage1, r"-")
+    let stage2 = STRING_REGEX.replace_all(&stage1, r"-").to_string();
+    let stage3 = UNNEEDED_UNIQUEFY_REGEX
+        .replace_all(&stage2, r"\1")
         .to_string();
-    let stage3 = UNNEEDED_UNIQUEFY_REGEX.replace_all(&stage2, r"\1").to_string();
     let mut stage4 = stage3.to_string();
     for c in SPECIAL_PATTERN_CHARS.iter().map(|c| *c) {
         let dupe_pattern = format!("[{c}][c]+");
@@ -58,10 +60,11 @@ pub fn slugify_string<T: std::string::ToString>(haystack: T, downcase: bool) -> 
         stage4 = stage4.trim_start_matches(c).to_string();
         stage4 = stage4.trim_end_matches(c).to_string();
     }
-    let stage5 = if downcase {
-        stage4.to_lowercase()
+    let stage5 = DUPE_SEPARATOR_REGEX.replace_all(stage4, "-").to_string();
+    let stage6 = if downcase {
+        stage5.to_lowercase()
     } else {
-        stage4
+        stage5
     };
     Ok(stage5)
 }
@@ -80,7 +83,7 @@ mod slugify_string_tests {
     }
     #[test]
     fn test_slugify_string() -> Result<()> {
-        assert_slugify_string!(         "  Foo  Baz  ", "Foo-Baz");
+        assert_slugify_string!("  Foo  Baz  ", "Foo-Baz");
         assert_slugify_string!(downcase "  Foo  Baz  ", "foo-baz");
         Ok(())
     }
