@@ -1,0 +1,73 @@
+[profile.release]
+strip = true                                   #  Automatically strip symbols from the binary.
+
+opt-level = 3                                  #  Optimizes heavily for execution speed.
+
+debug = false                                  #  Omits debug symbols to keep binaries clean.
+
+debug-assertions = false                       #  Disables runtime checks like,debug_assert!,macros.
+
+overflow-checks = false                        #  Disables runtime integer overflow panics.
+
+lto = true                                     #  By default, Cargo instructs compilation units to be compiled and optimized in
+                                              #  isolation. LTO instructs the linker to optimize at the link stage. This can, for example,
+                                              #  remove dead code and often times reduces binary size.
+
+panic = "abort"                                #  By default, when Rust code encounters a situation when it must call panic!(), it unwinds
+                                              #  the stack and produces a helpful backtrace. The unwinding code, however, does require
+                                              #  extra binary size. rustc can be instructed to abort immediately rather than unwind, which
+                                              #  removes the need for this extra unwinding code.
+
+codegen-units = 1                              #  By default, Cargo specifies 16 parallel codegen units for release builds. This improves
+                                              #  compile times, but prevents some optimizations.
+                                              #
+                                              #  Set this to 1 in Cargo.toml to allow for maximum size reduction optimizations:
+
+rustflags = [
+
+ "-Zlocation-detail=none",                    #  By default, Rust includes file, line, and column information for panic!() and
+                                              #  [track_caller] to provide more useful traceback information. This information requires
+                                              #  space in the binary and thus increases the size of the compiled binaries.
+                                              #  (nightly only)
+
+ "-Zfmt-debug=none",                          #  With the -Zfmt-debug flag you can turn #[derive(Debug)]and {:?} formatting into
+                                              #  no-ops. This will ruin output of dbg!(), assert!(), unwrap(), etc., and may break code
+                                              #  that unwisely relies on the debug formatting, but it will remove derived fmt functions
+                                              #  and their strings.
+                                              #  (nightly only)
+
+ # "-Zbuild-std=std,panic_abort",               #  build std from source, optimizing for size instead of using the
+ # "-Zbuild-std-features=optimize_for_size",    #  default, prebuild libstd which optimizes for speed.
+
+]
+
+[defauls.profile.release]
+opt-level = 3               #  Optimizes heavily for execution speed.
+debug = false               #  Omits debug symbols to keep binaries clean.
+debug-assertions = false    #  Disables runtime checks like,debug_assert!,macros.
+overflow-checks = false     #  Disables runtime integer overflow panics.
+lto = false                 #  Link-Time Optimization is turned off.
+panic = 'unwind'            #  Unwinds the stack upon crashing to clean up memory.
+codegen-units = 16          #  Compiles code in parallel blocks to speed up build times.,Embedded Rust,+4
+
+
+[target.mipsel-unknown-linux-musl]
+
+# -C link-arg=-Wl,-dynamic-linker,/lib/ld-musl-mipsel-sf.so.1 -C target-feature=+soft-float
+rustflags = [
+"-C", "target-feature=+crt-static",
+"-C", "opt-level=3",
+"-C", "debuginfo=0",
+# "-Zbuild-std",
+"-Zlocation-detail=none",
+"-Zfmt-debug=none",
+]
+
+
+
+[unstable]
+profile-rustflags = true
+build-std = ["core", "std", "alloc", "panic_abort"]
+
+# location-detail = "none"
+# fmt-debug = "none"
