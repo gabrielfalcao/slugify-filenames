@@ -1,12 +1,14 @@
 use crate::cli::parameters::SlugifyParameters;
 use crate::cli::verbosity::Verbosity;
-use std::time::SystemTime;
-use heck::ToPascalCase;
-use heck::ToShoutySnakeCase;
-use heck::ToShoutyKebabCase;
 pub use crate::errors::{Error, Result};
 use clap::{ArgAction, Parser};
+use heck::ToPascalCase;
+use heck::ToShoutyKebabCase;
+use heck::ToShoutySnakeCase;
+use heck::ToUpperKebabCase;
+use heck::ToUpperSnakeCase;
 use iocore::Path;
+use std::time::SystemTime;
 
 #[derive(Parser, Debug)]
 #[command(
