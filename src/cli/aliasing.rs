@@ -4,7 +4,7 @@ use heck::{
 };
 use std::fmt::Display;
 
-pub fn heck_aliases<T: Display>(input: T) -> Vec<String> {
+pub(crate) fn heck_aliases<T: Display>(input: T) -> Vec<String> {
     let base = input.to_string();
     let mut aliases: Vec<String> = vec![base.to_string()];
     {
