@@ -20,23 +20,22 @@ categories = ["filesystem"]
 name = "slugify_filenames"
 path = "src/lib.rs"
 
-doctest = false
+doctest = true
 bench = false
 
 
 [[bin]]
 name = "slugify-filenames"
 path = "src/bin/slugify-filenames.rs"
-doctest = false
 bench = false
-doc = false
+
 
 [[bin]]
 name = "slugify-string"
 path = "src/bin/slugify-string.rs"
-doctest = false
+
 bench = false
-doc = false
+
 
 # [[test]]
 # name = "test_cli"

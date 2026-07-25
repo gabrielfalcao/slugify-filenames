@@ -5,8 +5,8 @@ use clap::{ArgAction, Parser};
 use heck::ToPascalCase;
 use heck::ToShoutyKebabCase;
 use heck::ToShoutySnakeCase;
-use heck::ToUpperKebabCase;
-use heck::ToUpperSnakeCase;
+// use heck::ToKebabCase;
+// use heck::ToSnakeCase;
 use iocore::Path;
 use std::time::SystemTime;
 
