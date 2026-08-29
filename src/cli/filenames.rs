@@ -111,6 +111,7 @@ impl SlugifyFilenames {
             }
         }
     }
+
     pub fn paths(&self) -> Vec<Path> {
         let paths = if self.paths.is_empty() {
             let cwd = Path::cwd().try_canonicalize();
@@ -121,7 +122,23 @@ impl SlugifyFilenames {
             cwd.list().unwrap_or_default()
         } else {
             self.paths.clone()
-        };
+        }
+        .into_iter()
+        .filter(|path| match path.name().as_str() {
+            ".git" | ".gitignore" | ".hg" | ".hgignore" | "Cargo.toml" | "Cargo.lock" => false,
+            other => {
+                if other.starts_with(".") && other.ends_with("ignore") {
+                    false
+                } else {
+                    let extension = path.extension().unwrap_or_default();
+                    match extension.as_str() {
+                        "" | ".toml" | ".yaml" | ".lock" => false,
+                        _ => true,
+                    }
+                }
+            }
+        })
+        .collect::<Vec<Path>>();
         let all_paths_are_dirs = paths.iter().all(|path| path.try_canonicalize().is_dir());
         if !self.recursive && all_paths_are_dirs {
             self.eprintln(
@@ -211,7 +228,10 @@ impl SlugifyFilenames {
         } else if path.name() == new_path.name().to_shouty_kebab_case() {
             return Ok(new_path);
         }
-        while path.name() != new_path.name() && new_path.exists() {
+        while path.name() != new_path.name()
+            && new_path.exists()
+            && paths_are_not_same_file(&path, &new_path)?
+        {
             let new_filename =
                 Path::join_extension(format!("{new_name}.{count}"), new_extension.clone());
             new_path = path.with_filename(&new_filename);
@@ -347,4 +367,18 @@ impl SlugifyFilenames {
         }
         Ok(())
     }
+}
+pub fn paths_are_not_same_file(source: &Path, target: &Path) -> Result<bool> {
+    use sure25::Hasher;
+
+    let source_bytes = source.read_bytes()?;
+    let target_bytes = target.read_bytes()?;
+
+    let mut source_hasher = Hasher::new();
+    source_hasher.update(&source_bytes);
+    let source_hash = source_hasher.finalize();
+    let mut target_hasher = Hasher::new();
+    target_hasher.update(&target_bytes);
+    let target_hash = target_hasher.finalize();
+    Ok(source_hash != target_hash)
 }
