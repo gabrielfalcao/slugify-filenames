@@ -111,7 +111,6 @@ impl SlugifyFilenames {
             }
         }
     }
-
     pub fn paths(&self) -> Vec<Path> {
         let paths = if self.paths.is_empty() {
             let cwd = Path::cwd().try_canonicalize();

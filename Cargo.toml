@@ -52,6 +52,7 @@ log = "0.4.33"
 humantime = "2.3.0"
 heck = "0.5.0"
 fern = "0.7.1"
+sure25 = "0.0.3"
 
 [dev-dependencies]
 debug-et-diagnostics = "0.3.1"
