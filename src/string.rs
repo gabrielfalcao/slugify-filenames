@@ -64,7 +64,7 @@ pub fn slugify_string<T: std::string::ToString>(haystack: T, downcase: bool) -> 
     };
     let mut stage4 = stage3.to_string();
     for c in SPECIAL_PATTERN_CHARS.iter().map(|c| *c) {
-        let dupe_pattern = format!("[{c}][c]+");
+        let dupe_pattern = format!("[{c}][{c}]+");
         let re = Regex::new(&dupe_pattern)?;
 
         stage4 = re.replace_all(&stage4, &c.to_string()).to_string();
